@@ -1,10 +1,10 @@
 const bcrypt = require('bcryptjs');
-const { db, User, Session, Exercise, Workout } = require('./setup');
+const { User, Session, Exercise, Workout, sequelize } = require('./setup');
 
 async function seedDatabase() {
     try {
         // Reset database
-        await db.sync({ force: true });
+        await sequelize.sync({ force: true });
         console.log('Database reset successfully.');
 
         // Create sample users
@@ -100,7 +100,7 @@ async function seedDatabase() {
     } catch (error) {
         console.error('Error seeding database:', error);
     } finally {
-        await db.close();
+        await sequelize.close();
     }
 }
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Exercise = require('../database/models/Exercise');
+const { Exercise } = require('../database/setup');
 
 // GET all exercises
 router.get('/', async (req, res) => {

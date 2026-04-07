@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Session = require('../database/models/Session');
+const { Session } = require('../database/setup');
 
 // GET all sessions
 router.get('/', async (req, res) => {

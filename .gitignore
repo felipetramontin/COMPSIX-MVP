@@ -39,6 +39,11 @@ build/Release
 
 # Dependency directories
 node_modules/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.env
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
