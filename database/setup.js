@@ -1,10 +1,12 @@
+const isTest = process.env.NODE_ENV === 'test';
+
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
 // Initialize database connection
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: `database/${process.env.DB_NAME}`,
+    storage: isTest ? `database/test.db` : `database/${process.env.DB_NAME}`,
     logging: false
 });
 
@@ -25,17 +27,10 @@ Exercise.hasMany(Workout, { foreignKey: 'exercise_id' });
 Workout.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 
 // Sync database
-(async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('Database connection established successfully.');
+sequelize.authenticate()
+    .then(() => console.log("Database connected"))
+    .catch(err => console.error(err));
 
-        await sequelize.sync({ force: false });
-        console.log('Database synchronized successfully.');
-    } catch (error) {
-        console.error('Unable to connect to database:', error);
-    }
-})();
 
 module.exports = {
     sequelize,

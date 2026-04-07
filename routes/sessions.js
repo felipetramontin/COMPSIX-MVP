@@ -28,21 +28,28 @@ router.post('/', async (req, res) => {
 // UPDATE session
 router.put('/:id', async (req, res) => {
     try {
-        const [updated] = await Session.update(req.body, {
-            where: { id: req.params.id }
-        });
-        if (!updated) return res.status(404).json({ error: 'Session not found' });
-        res.json({ message: 'Session updated' });
+        const session = await Session.findByPk(req.params.id);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        await session.update(req.body);
+        res.json(session); // return updated object
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// DELETE session
+
 router.delete('/:id', async (req, res) => {
-    const deleted = await Session.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'Session not found' });
-    res.json({ message: 'Session deleted' });
+    try {
+        const session = await Session.findByPk(req.params.id);
+        if (!session) return res.status(404).json({ error: 'Session not found' });
+
+        await session.destroy();
+        res.status(204).send(); // No content
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
+
 
 module.exports = router;

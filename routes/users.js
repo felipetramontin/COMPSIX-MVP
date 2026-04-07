@@ -25,24 +25,26 @@ router.post('/', async (req, res) => {
     }
 });
 
-// UPDATE user
+// UPDATE (return updated object)
 router.put('/:id', async (req, res) => {
     try {
-        const [updated] = await User.update(req.body, {
-            where: { id: req.params.id }
-        });
-        if (!updated) return res.status(404).json({ error: 'User not found' });
-        res.json({ message: 'User updated' });
+        const user = await User.findByPk(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        await user.update(req.body);
+        res.json(user);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// DELETE user
+// DELETE (return 204)
 router.delete('/:id', async (req, res) => {
-    const deleted = await User.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User deleted' });
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await user.destroy();
+    res.status(204).send();
 });
 
 module.exports = router;

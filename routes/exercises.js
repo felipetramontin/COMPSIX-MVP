@@ -25,24 +25,26 @@ router.post('/', async (req, res) => {
     }
 });
 
-// UPDATE exercise
+// UPDATE (return updated object)
 router.put('/:id', async (req, res) => {
     try {
-        const [updated] = await Exercise.update(req.body, {
-            where: { id: req.params.id }
-        });
-        if (!updated) return res.status(404).json({ error: 'Exercise not found' });
-        res.json({ message: 'Exercise updated' });
+        const exercise = await Exercise.findByPk(req.params.id);
+        if (!exercise) return res.status(404).json({ error: 'Exercise not found' });
+
+        await exercise.update(req.body);
+        res.json(exercise);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// DELETE exercise
+// DELETE (return 204)
 router.delete('/:id', async (req, res) => {
-    const deleted = await Exercise.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'Exercise not found' });
-    res.json({ message: 'Exercise deleted' });
+    const exercise = await Exercise.findByPk(req.params.id);
+    if (!exercise) return res.status(404).json({ error: 'Exercise not found' });
+
+    await exercise.destroy();
+    res.status(204).send();
 });
 
 module.exports = router;
