@@ -1,44 +1,107 @@
-const { sequelize } = require('../setup');
-const User = require('../models/User');
-const Session = require('../models/Session');
-const Exercise = require('../models/Exercise');
-const Workout = require('../models/Workout');
+const bcrypt = require('bcryptjs');
+const { db, User, Session, Exercise, Workout } = require('./setup');
 
-(async () => {
+async function seedDatabase() {
     try {
-        await sequelize.sync({ force: true });
+        // Reset database
+        await db.sync({ force: true });
+        console.log('Database reset successfully.');
 
-        const user = await User.create({
-            name: 'John Doe',
-            email: 'john@example.com',
-            password: 'hashed-placeholder',
-            role: 'client'
-        });
+        // Create sample users
+        const hashedPassword = await bcrypt.hash('password123', 10);
 
-        const bench = await Exercise.create({
-            name: 'Bench Press',
-            muscle_group: 'Chest',
-            description: 'Barbell bench press'
-        });
+        const users = await User.bulkCreate([
+            {
+                name: 'John Doe',
+                email: 'john@example.com',
+                password: hashedPassword
+            },
+            {
+                name: 'Jane Smith',
+                email: 'jane@example.com',
+                password: hashedPassword
+            }
+        ]);
 
-        const session = await Session.create({
-            user_id: user.id,
-            date: '2025-04-01',
-            notes: 'Chest day'
-        });
+        console.log('Users created.');
 
-        await Workout.create({
-            session_id: session.id,
-            exercise_id: bench.id,
-            sets: 3,
-            reps: 10,
-            weight: 135
-        });
+        // Create sample exercises
+        const exercises = await Exercise.bulkCreate([
+            {
+                name: 'Bench Press',
+                muscle_group: 'Chest',
+                description: 'Barbell bench press'
+            },
+            {
+                name: 'Squat',
+                muscle_group: 'Legs',
+                description: 'Barbell back squat'
+            },
+            {
+                name: 'Deadlift',
+                muscle_group: 'Back',
+                description: 'Conventional barbell deadlift'
+            }
+        ]);
 
-        console.log('Seed complete');
-        process.exit(0);
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
+        console.log('Exercises created.');
+
+        // Create sample sessions
+        const sessions = await Session.bulkCreate([
+            {
+                user_id: users[0].id,
+                date: '2025-04-01',
+                notes: 'Strength training day'
+            },
+            {
+                user_id: users[1].id,
+                date: '2025-04-02',
+                notes: 'Leg day'
+            }
+        ]);
+
+        console.log('Sessions created.');
+
+        // Create sample workouts (exercise performed inside a session)
+        await Workout.bulkCreate([
+            // John's session
+            {
+                session_id: sessions[0].id,
+                exercise_id: exercises[0].id, // Bench
+                sets: 3,
+                reps: 8,
+                weight: 185
+            },
+            {
+                session_id: sessions[0].id,
+                exercise_id: exercises[2].id, // Deadlift
+                sets: 3,
+                reps: 5,
+                weight: 275
+            },
+
+            // Jane's session
+            {
+                session_id: sessions[1].id,
+                exercise_id: exercises[1].id, // Squat
+                sets: 4,
+                reps: 6,
+                weight: 155
+            }
+        ]);
+
+        console.log('Workouts created.');
+
+        console.log('\nDatabase seeded successfully!');
+        console.log('Sample users:');
+        console.log('- john@example.com / password123');
+        console.log('- jane@example.com / password123');
+
+    } catch (error) {
+        console.error('Error seeding database:', error);
+    } finally {
+        await db.close();
     }
-})();
+}
+
+seedDatabase();
