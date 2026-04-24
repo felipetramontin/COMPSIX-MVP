@@ -1,22 +1,34 @@
-const isTest = process.env.NODE_ENV === 'test';
-
+const fs = require('fs');
+const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
-// Initialize database connection
+const isTest = process.env.NODE_ENV === 'test';
+
+// Ensure database folder exists (Render needs this!)
+const dbFolder = path.join(__dirname);
+if (!fs.existsSync(dbFolder)) {
+    fs.mkdirSync(dbFolder, { recursive: true });
+}
+
+const dbPath = isTest
+    ? path.join(__dirname, 'test.db')
+    : path.join(__dirname, process.env.DB_NAME || 'dev.db');
+
+// Initialize SQLite
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: isTest ? 'database/test.db' : `database/${process.env.DB_NAME}`,
+    storage: dbPath,
     logging: false
 });
 
-// Import models (each returns a model when called)
+// Import models
 const User = require('./models/User')(sequelize, DataTypes);
 const Session = require('./models/Session')(sequelize, DataTypes);
 const Exercise = require('./models/Exercise')(sequelize, DataTypes);
 const Workout = require('./models/Workout')(sequelize, DataTypes);
 
-// Define Relationships
+// Define relationships
 User.hasMany(Session, { foreignKey: 'user_id' });
 Session.belongsTo(User, { foreignKey: 'user_id' });
 
@@ -26,11 +38,8 @@ Workout.belongsTo(Session, { foreignKey: 'session_id' });
 Exercise.hasMany(Workout, { foreignKey: 'exercise_id' });
 Workout.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 
-// Sync database
-sequelize.authenticate()
-    .then(() => console.log("Database connected"))
-    .catch(err => console.error(err));
-
+// DO NOT authenticate() here — it crashes on Render
+// DO NOT sync() here — do it in index.js
 
 module.exports = {
     sequelize,
