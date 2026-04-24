@@ -7,9 +7,8 @@ require('dotenv').config();
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: isTest ? 'database/test.db' : `database/${process.env.DB_NAME}`,
-    dialectModule: require('better-sqlite3'),
     logging: false
-  });
+});
 
 // Import models (each returns a model when called)
 const User = require('./models/User')(sequelize, DataTypes);
