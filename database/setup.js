@@ -5,7 +5,6 @@ require('dotenv').config();
 
 const isTest = process.env.NODE_ENV === 'test';
 
-// Ensure database folder exists (Render needs this!)
 const dbFolder = path.join(__dirname);
 if (!fs.existsSync(dbFolder)) {
     fs.mkdirSync(dbFolder, { recursive: true });
@@ -38,8 +37,6 @@ Workout.belongsTo(Session, { foreignKey: 'session_id' });
 Exercise.hasMany(Workout, { foreignKey: 'exercise_id' });
 Workout.belongsTo(Exercise, { foreignKey: 'exercise_id' });
 
-// DO NOT authenticate() here — it crashes on Render
-// DO NOT sync() here — do it in index.js
 
 module.exports = {
     sequelize,
