@@ -1,25 +1,26 @@
+// server.js
 const express = require('express');
-const app = express();
+const cors = require('cors');
+require('dotenv').config();
 
 const logger = require('./middleware/logger');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
-
 const routes = require('./routes');
 
-// Parse JSON
-app.use(express.json());
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Custom request logger
+// Middleware
+app.use(express.json());
+app.use(cors());
 app.use(logger);
 
-// Mount all routes
+// Routes
 app.use('/api', routes);
 
-// 404 handler (no route matched)
+// 404 + Error handling
 app.use(notFound);
-
-// Global error handler
 app.use(errorHandler);
 
 module.exports = app;
