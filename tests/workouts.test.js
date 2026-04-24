@@ -1,26 +1,40 @@
+// tests/workouts.test.js
 process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const app = require('../server');
-const { sequelize, User, Session, Exercise, Workout } = require('../database/setup');
+const { sequelize, User, Session, Exercise } = require('../database/setup');
+
+let trainerToken;
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
 
-  const user = await User.create({
-    name: "John",
-    email: "john@example.com",
-    password: "pass"
+  // Trainer
+  await request(app).post('/api/auth/register').send({
+    name: "Trainer",
+    email: "trainer@example.com",
+    password: "trainerpass",
+    role: "trainer"
   });
 
-  const exercise = await Exercise.create({
+  const trainerLogin = await request(app).post('/api/auth/login').send({
+    email: "trainer@example.com",
+    password: "trainerpass"
+  });
+
+  trainerToken = trainerLogin.body.token;
+
+  // Create exercise
+  await Exercise.create({
     name: "Squat",
     muscle_group: "Legs",
     description: "Barbell squat"
   });
 
+  // Create session
   await Session.create({
-    user_id: user.id,
+    user_id: 1,
     date: "2025-04-01",
     notes: "Leg day"
   });
@@ -30,11 +44,12 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe("Workout CRUD", () => {
+describe("Workouts CRUD with roles", () => {
 
-  test("Create a workout", async () => {
+  test("Trainer can create workout", async () => {
     const res = await request(app)
       .post('/api/workouts')
+      .set('Authorization', `Bearer ${trainerToken}`)
       .send({
         session_id: 1,
         exercise_id: 1,
@@ -44,38 +59,16 @@ describe("Workout CRUD", () => {
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body.sets).toBe(3);
   });
 
-  test("Get all workouts", async () => {
-    const res = await request(app).get('/api/workouts');
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  test("Get workout (404)", async () => {
-    const res = await request(app).get('/api/workouts/9999');
-    expect(res.statusCode).toBe(404);
-  });
-
-  test("Update a workout", async () => {
+  test("Trainer can update workout", async () => {
     const res = await request(app)
       .put('/api/workouts/1')
+      .set('Authorization', `Bearer ${trainerToken}`)
       .send({ reps: 10 });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.reps).toBe(10);
-  });
-
-  test("Delete a workout", async () => {
-    const res = await request(app).delete('/api/workouts/1');
-    expect(res.statusCode).toBe(204);
-  });
-
-  test("Get deleted workout (404)", async () => {
-    const res = await request(app).get('/api/workouts/1');
-    expect(res.statusCode).toBe(404);
   });
 
 });

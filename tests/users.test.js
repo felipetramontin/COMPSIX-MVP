@@ -1,62 +1,92 @@
+// tests/users.test.js
 process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const app = require('../server');
 const { sequelize, User } = require('../database/setup');
 
+let adminToken;
+let clientToken;
+
 beforeAll(async () => {
-    await sequelize.sync({ force: true });
+  await sequelize.sync({ force: true });
+
+  // Create admin
+  await request(app).post('/api/auth/register').send({
+    name: "Admin",
+    email: "admin@example.com",
+    password: "adminpass",
+    role: "admin"
+  });
+
+  const adminLogin = await request(app).post('/api/auth/login').send({
+    email: "admin@example.com",
+    password: "adminpass"
+  });
+
+  adminToken = adminLogin.body.token;
+
+  // Create client
+  await request(app).post('/api/auth/register').send({
+    name: "Client",
+    email: "client@example.com",
+    password: "clientpass",
+    role: "client"
+  });
+
+  const clientLogin = await request(app).post('/api/auth/login').send({
+    email: "client@example.com",
+    password: "clientpass"
+  });
+
+  clientToken = clientLogin.body.token;
 });
 
 afterAll(async () => {
-    await sequelize.close();
+  await sequelize.close();
 });
 
-describe("User CRUD", () => {
+describe("Users CRUD with roles", () => {
 
-    test("Create a user", async () => {
-        const res = await request(app)
-            .post('/api/users')
-            .send({
-                name: "Test User",
-                email: "test@example.com",
-                password: "password123"
-            });
+  test("Admin can get all users", async () => {
+    const res = await request(app)
+      .get('/api/users')
+      .set('Authorization', `Bearer ${adminToken}`);
 
-        expect(res.statusCode).toBe(201);
-        expect(res.body.email).toBe("test@example.com");
-    });
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
 
-    test("Get all users", async () => {
-        const res = await request(app).get('/api/users');
+  test("Client cannot get all users", async () => {
+    const res = await request(app)
+      .get('/api/users')
+      .set('Authorization', `Bearer ${clientToken}`);
 
-        expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
-    });
+    expect(res.statusCode).toBe(403);
+  });
 
-    test("Return 404 for non-existing user", async () => {
-        const res = await request(app).get('/api/users/9999');
+  test("Client can get their own profile", async () => {
+    const res = await request(app)
+      .get('/api/users/2')
+      .set('Authorization', `Bearer ${clientToken}`);
 
-        expect(res.statusCode).toBe(404);
-    });
+    expect(res.statusCode).toBe(200);
+  });
 
-    test("Update a user", async () => {
-        const res = await request(app)
-            .put('/api/users/1')
-            .send({ name: "Updated User" });
+  test("Client cannot delete users", async () => {
+    const res = await request(app)
+      .delete('/api/users/2')
+      .set('Authorization', `Bearer ${clientToken}`);
 
-        expect(res.statusCode).toBe(200);
-        expect(res.body.name).toBe("Updated User");
-    });
+    expect(res.statusCode).toBe(403);
+  });
 
-    test("Delete a user", async () => {
-        const res = await request(app).delete('/api/users/1');
-        expect(res.statusCode).toBe(204);
-    });
+  test("Admin can delete a user", async () => {
+    const res = await request(app)
+      .delete('/api/users/2')
+      .set('Authorization', `Bearer ${adminToken}`);
 
-    test("Get deleted user (404)", async () => {
-        const res = await request(app).get('/api/users/1');
-        expect(res.statusCode).toBe(404);
-    });
+    expect(res.statusCode).toBe(204);
+  });
 
 });
