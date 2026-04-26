@@ -1,10 +1,8 @@
-# Fitness Coaching API – Final Project
+# Fitness API – Final Project
 
 ## Overview
 A backend REST API for managing users, training sessions, workouts, and exercises.  
 Built with **Node.js**, **Express**, **Sequelize**, **JWT authentication**, and **role-based authorization**.
-
-This project fulfills the requirements for the COMPSCI Backend Development Final Project.
 
 ## Features
 - REST API with Express  
@@ -44,12 +42,14 @@ NODE_ENV=development
 PORT=3000
 DB_NAME=dev.db
 JWT_SECRET=your-secret
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=24h
 ```
 
-### 4. Run the server
+### 4. Setup, Seed and Run the server
 ```bash
-npm run dev
+npm run setup
+npm run seed
+npm start
 ```
 
 ## Running Tests
@@ -148,7 +148,7 @@ For deployment, ensure your environment supports SQLite or use a WASM-based SQLi
 NODE_ENV=production
 DB_NAME=dev.db
 JWT_SECRET=your-secret
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=24h
 ```
 
 ## Author
